@@ -1,10 +1,9 @@
 [BITS 32]
-
-global kernel_entry
-extern kernel_start
-
 SEG_CODE equ 0x08
 SEG_DATA equ 0x10
+
+global kernel_entry
+extern kernel_main
 
 
 kernel_entry:
@@ -20,7 +19,7 @@ kernel_entry:
     in al, 0x92
     or al, 2
     out 0x92, al
-    call kernel_start
+    call kernel_main
     jmp $
 
 times 512-($ - $$) db 0
