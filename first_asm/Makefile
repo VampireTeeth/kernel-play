@@ -63,7 +63,7 @@ run_bochs: $(OS_BIN)
 qemu_debug: $(OS_BIN)
 	gdb \
 		--eval-command="set confirm off" \
-		--eval-command="target remote | qemu-system-x86_64 -drive format=raw,file=$(OS_BIN) -S -gdb stdio" \
+		--eval-command="target remote | qemu-system-x86_64 -drive format=raw,file=$(OS_BIN) -display gtk -S -gdb stdio" \
 		--eval-command="add-symbol-file $(KERNEL_FULL_OBJ) 0x00100000" \
 		--eval-command="break kernel_main"
 
