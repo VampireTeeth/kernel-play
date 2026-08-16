@@ -1,7 +1,7 @@
 TARGET = target
 BOOT_SRC_FILE = src/boot/boot.asm
 KERNEL_SRC_FILE = src/kernel.asm
-KERNEL_C_SRC_FILES = src/kernel.c
+KERNEL_C_SRC_FILES = src/kernel.c src/idt/idt.c
 LINKER_LD = ./linker.ld
 
 # Derive Basename (e.g., "hello" from "src/hello.asm")
@@ -13,19 +13,24 @@ BOOT_BASE := $(basename $(notdir $(BOOT_SRC_FILE)))
 BOOT_BIN = $(TARGET)/$(BOOT_BASE).bin
 
 KERNEL_OBJ = $(TARGET)/kernel.asm.o
-KERNEL_C_OBJ = $(TARGET)/kernel.o
+KERNEL_C_OBJ = $(TARGET)/kernel.o $(TARGET)/idt.o
 KERNEL_FULL_OBJ = $(TARGET)/kernelfull.o
 
 KERNEL_BIN = $(TARGET)/kernel.bin
 
-OBJS = $(KERNEL_OBJ) $(KERNEL_C_OBJ) # The kernel.asm.o needs to be the first obj entry
+# Find all source files
+EXCLUDED_ASM_SRCS := src/add.asm src/hello.asm src/scratch.asm
+ASM_SRCS := $(wildcard src/kernel.asm src/idt/*.asm)  # The kernel.asm needs to be the first, so the kernel.asm.o will be first in OBJS
+C_SRCS := $(wildcard src/*.c src/idt/*.c src/memory/*.c src/io/*.c)
+# Transform source paths to object paths (e.g., src/main.c -> target/src/main.o)
+OBJS := $(patsubst src/%.asm,$(TARGET)/%.asm.o,$(ASM_SRCS)) $(patsubst src/%.c,$(TARGET)/%.o,$(C_SRCS)) # The kernel.asm.o needs to be the first obj entry
 OS_BIN = $(TARGET)/os.bin
 OS_IMG = $(TARGET)/os.img
 
 BOCHS_BIN=bochs
 
 INCLUDES = -I./src
-FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
+FLAGS = -g -mgeneral-regs-only -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
 $(TARGET):
 	mkdir -p $(TARGET)
@@ -33,11 +38,13 @@ $(TARGET):
 $(BOOT_BIN):  $(BOOT_SRC_FILE) | $(TARGET)
 	nasm -f bin $(BOOT_SRC_FILE) -o $(BOOT_BIN)
 
-$(KERNEL_OBJ): $(KERNEL_SRC_FILE) | $(TARGET)
-	nasm -f elf -g $(KERNEL_SRC_FILE) -o $(KERNEL_OBJ)
+$(TARGET)/%.asm.o: src/%.asm | $(TARGET)
+	mkdir -p $(dir $@)
+	nasm -f elf -g $< -o $@
 
-$(KERNEL_C_OBJ): $(KERNEL_C_SRC_FILES) | $(TARGET)
-	i686-elf-gcc $(INCLUDES) $(FLAGS) -std=gnu99 -c $(KERNEL_C_SRC_FILES) -o $(KERNEL_C_OBJ)
+$(TARGET)/%.o: src/%.c | $(TARGET)
+	mkdir -p $(dir $@)
+	i686-elf-gcc $(INCLUDES) $(FLAGS) -std=gnu99 -c $< -o $@
 
 $(KERNEL_BIN): $(OBJS)
 	i686-elf-ld -g -relocatable $(OBJS) -o $(KERNEL_FULL_OBJ)
@@ -48,7 +55,7 @@ $(OS_BIN): $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=$(KERNEL_BIN) >> $(OS_BIN)
 	dd if=/dev/zero bs=512 count=1000 >> $(OS_BIN)
 
-kernel: $(OS_BIN)
+all: $(OS_BIN)
 	echo "Build Kernel"
 
 run_bochs: $(OS_BIN)
