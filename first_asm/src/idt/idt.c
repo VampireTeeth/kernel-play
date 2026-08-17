@@ -11,13 +11,25 @@ static idt_desc idt_descriptors[OS_TOTAL_INTERRUPTS];
 static idtr_desc idtr_descriptor;
 
 extern void idt_load(idtr_desc* ptr);
+extern void enable_interrupt();
+
+// handles IRQ 1 (keyboard pressed IRQ), PIC vector offset is remapped to 0x20
+// so the IRQ1 interrupt number is 0x21
+extern void int21h();
+extern void no_interrupt();
+
+void int21h_handler()
+{
+    print_string("Keyboard pressed!!!");
+    outb(0x20, 0x20); // ack to master PIC command port 0x20
+}
+
+void no_interrupt_handler()
+{
+    outb(0x20, 0x20); // ack to master PIC command port 0x20
+}
 
 typedef struct interrupt_frame interrupt_frame;
-
-__attribute__((interrupt)) void is_zero(interrupt_frame * frame)
-{
-     print_string("Divided by zero!!!");
-}
 
 static void set_interrupt_handler(int int_no, void* handler_addr)
 {
@@ -34,6 +46,11 @@ void idtr_init()
     memset(&idt_descriptors, 0, sizeof(idt_descriptors));
     idtr_descriptor.limit = sizeof(idt_descriptors) - 1;
     idtr_descriptor.base = (uint32_t)&idt_descriptors;
-    set_interrupt_handler(0, is_zero);
+    for (int i = 0; i < OS_TOTAL_INTERRUPTS; i++)
+    {
+        set_interrupt_handler(i, no_interrupt);
+    }
+    set_interrupt_handler(0x21, int21h);
     idt_load(&idtr_descriptor);
+    enable_interrupt();
 }

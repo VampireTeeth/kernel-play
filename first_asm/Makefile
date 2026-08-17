@@ -20,7 +20,7 @@ KERNEL_BIN = $(TARGET)/kernel.bin
 
 # Find all source files
 EXCLUDED_ASM_SRCS := src/add.asm src/hello.asm src/scratch.asm
-ASM_SRCS := $(wildcard src/kernel.asm src/idt/*.asm)  # The kernel.asm needs to be the first, so the kernel.asm.o will be first in OBJS
+ASM_SRCS := $(wildcard src/kernel.asm src/idt/*.asm src/io/*.asm)  # The kernel.asm needs to be the first, so the kernel.asm.o will be first in OBJS
 C_SRCS := $(wildcard src/*.c src/idt/*.c src/memory/*.c src/io/*.c)
 # Transform source paths to object paths (e.g., src/main.c -> target/src/main.o)
 OBJS := $(patsubst src/%.asm,$(TARGET)/%.asm.o,$(ASM_SRCS)) $(patsubst src/%.c,$(TARGET)/%.o,$(C_SRCS)) # The kernel.asm.o needs to be the first obj entry
