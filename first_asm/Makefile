@@ -21,7 +21,8 @@ KERNEL_BIN = $(TARGET)/kernel.bin
 # Find all source files
 EXCLUDED_ASM_SRCS := src/add.asm src/hello.asm src/scratch.asm
 ASM_SRCS := $(wildcard src/kernel.asm src/idt/*.asm src/io/*.asm)  # The kernel.asm needs to be the first, so the kernel.asm.o will be first in OBJS
-C_SRCS := $(wildcard src/*.c src/idt/*.c src/memory/*.c src/io/*.c)
+C_SRCS := $(wildcard src/*.c src/idt/*.c src/memory/*.c src/io/*.c src/memory/heap/*.c)
+# C_SRCS := $(wildcard src/*.c src/**/*.c)
 # Transform source paths to object paths (e.g., src/main.c -> target/src/main.o)
 OBJS := $(patsubst src/%.asm,$(TARGET)/%.asm.o,$(ASM_SRCS)) $(patsubst src/%.c,$(TARGET)/%.o,$(C_SRCS)) # The kernel.asm.o needs to be the first obj entry
 OS_BIN = $(TARGET)/os.bin
@@ -30,7 +31,7 @@ OS_IMG = $(TARGET)/os.img
 BOCHS_BIN=bochs
 
 INCLUDES = -I./src
-FLAGS = -g -mgeneral-regs-only -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
+FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
 $(TARGET):
 	mkdir -p $(TARGET)
@@ -70,7 +71,7 @@ run_bochs: $(OS_BIN)
 qemu_debug: $(OS_BIN)
 	gdb \
 		--eval-command="set confirm off" \
-		--eval-command="target remote | qemu-system-x86_64 -drive format=raw,file=$(OS_BIN) -display gtk -S -gdb stdio" \
+		--eval-command="target remote | qemu-system-i386 -drive format=raw,file=$(OS_BIN) -display gtk -S -gdb stdio" \
 		--eval-command="add-symbol-file $(KERNEL_FULL_OBJ) 0x00100000" \
 		--eval-command="break kernel_main"
 
