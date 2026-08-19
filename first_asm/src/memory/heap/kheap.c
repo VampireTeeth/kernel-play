@@ -31,3 +31,8 @@ void* kheap_malloc(size_t size)
 {
     return heap_malloc(&heap, size);
 }
+
+void kheap_free(void* ptr)
+{
+    heap_free(&heap, ptr);
+}

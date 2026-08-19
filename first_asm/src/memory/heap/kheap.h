@@ -8,4 +8,5 @@
 
 void kheap_init();
 void* kheap_malloc(size_t size);
+void kheap_free(void* ptr);
 #endif //FIRST_ASM_KHEAP_H

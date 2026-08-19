@@ -12,20 +12,8 @@ void kernel_main() {
     kheap_init();
     void* ptr1 = kheap_malloc(50);
     void* ptr2 = kheap_malloc(15000);
+    kheap_free(ptr2);
     void* ptr3 = kheap_malloc(5000);
-
-    if (ptr1 == NULL)
-    {
-        print_string("fail to allocate memory");
-    }
-
-    if (ptr2 == NULL)
-    {
-        print_string("fail to allocate memory");
-    }
-
-    if (ptr3 == NULL)
-    {
-        print_string("fail to allocate memory");
-    }
+    kheap_free(ptr3);
+    kheap_free(ptr1);
 }

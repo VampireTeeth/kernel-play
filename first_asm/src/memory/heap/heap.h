@@ -19,10 +19,10 @@
 // 7: 1 has_next
 // 6: 1 is_first
 // 5: 0 not used
-// 4
-// 3
-// 2
-// 1
+// 4: type attributes
+// 3: type attributes
+// 2: type attributes
+// 1: type attributes
 // 0: 1 taken
 typedef unsigned char heap_block_table_entry_t;
 

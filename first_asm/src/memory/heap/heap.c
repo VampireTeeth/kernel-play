@@ -101,7 +101,7 @@ static heap_block_table_entry_t* find_free_block_start(const heap_t* const heap,
         {
             return cur_start;
         }
-        cur_start = find_next_free_block(cur_start, end);
+        cur_start = find_next_free_block(cur_start+1, end);
         cur_end = cur_start + blocks;
     }
     return NULL;
@@ -149,6 +149,22 @@ void* heap_malloc(heap_t* heap, size_t size)
     return heap_malloc_blocks(heap, blocks);
 }
 
+static bool heap_table_entry_has_next(heap_block_table_entry_t* entry)
+{
+    return (HEAP_BLOCK_HAS_NEXT & *entry) > 0;
+}
+
 void heap_free(heap_t* heap, void* ptr)
 {
+    int block_start = (ptr - heap->start_addr) / KERNEL_HEAP_BLOCK_SIZE;
+    heap_block_table_entry_t* entry = heap->table->entries + block_start;
+    void* cur_data_block = heap->start_addr;;
+    while (heap_table_entry_has_next(entry))
+    {
+        memset(cur_data_block, 0, KERNEL_HEAP_BLOCK_SIZE);
+        *entry = HEAP_BLOCK_TABLE_ENTRY_FREE;
+        entry++;
+        cur_data_block += KERNEL_HEAP_BLOCK_SIZE;
+    }
+    ptr = NULL;
 }
