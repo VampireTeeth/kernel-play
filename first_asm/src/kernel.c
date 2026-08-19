@@ -2,6 +2,7 @@
 #include "io/io.h"
 #include "idt/idt.h"
 #include "memory/heap/kheap.h"
+#include "memory/paging/paging.h"
 
 void kernel_main() {
     const char hello[] = "Hello, my kernel!";

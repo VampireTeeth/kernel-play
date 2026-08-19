@@ -32,6 +32,16 @@ void* kheap_malloc(size_t size)
     return heap_malloc(&heap, size);
 }
 
+void* kheap_zalloc(size_t size)
+{
+    void* ptr = kheap_malloc(size);
+    if (ptr != NULL)
+    {
+        memset(ptr, 0, size);
+    }
+    return ptr;
+}
+
 void kheap_free(void* ptr)
 {
     heap_free(&heap, ptr);
