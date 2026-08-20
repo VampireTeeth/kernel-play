@@ -9,39 +9,27 @@
 #include <stdint.h>
 
 
-static bool validate_alignment(void* ptr)
+static bool validate_alignment(void* ptr, size_t block_size)
 {
-    return (unsigned int)ptr % KERNEL_HEAP_BLOCK_SIZE == 0;
+    return (unsigned int)ptr % block_size == 0;
 }
 
-static int heap_validate_table(void* start, void* end, heap_table_t* table)
-{
-    size_t table_size = (size_t)(end - start);
-    size_t total_blocks = table_size / KERNEL_HEAP_BLOCK_SIZE;
-    if (table->size != total_blocks)
-    {
-        return -EINVARG;
-    }
-    return 0;
-}
-
-int heap_create(heap_t* heap_ptr, void* start, void* end, heap_table_t* table)
+int heap_create(heap_t* heap_ptr, heap_table_t* table, void* heap_start, void* table_start, size_t heap_size, size_t block_size)
 {
     int res = 0;
-    if (!validate_alignment(start) || !validate_alignment(end))
+    heap_block_table_entry_t* entries = table_start;
+    void* heap_end = heap_start + heap_size;
+    if (!validate_alignment(heap_start, block_size) || !validate_alignment(heap_end, block_size))
     {
         return -EINVARG;
     }
-    memset(heap_ptr, 0, sizeof(heap_t));
-    heap_ptr->start_addr = start;
+    size_t table_size = heap_size / block_size;
+    size_t table_total_bytes = sizeof(heap_block_table_entry_t) * table_size;
+    table->size = table_size;
+    table->entries = entries;
+    memset(table->entries, HEAP_BLOCK_TABLE_ENTRY_FREE, table_total_bytes);
+    heap_ptr->start_addr = heap_start;
     heap_ptr->table = table;
-    res = heap_validate_table(start, end, table);
-    if (res < 0)
-    {
-        return res;
-    }
-    size_t total_bytes = sizeof(heap_block_table_entry_t) * table->size;
-    memset(table->entries, HEAP_BLOCK_TABLE_ENTRY_FREE , total_bytes);
     return res;
 }
 

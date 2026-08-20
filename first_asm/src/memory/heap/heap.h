@@ -38,8 +38,13 @@ typedef struct heap
     void* start_addr; // Start of the memory address of the heap
 } heap_t;
 
-int heap_create(heap_t* heap_ptr, void* start, void* end, heap_table_t* table);
+int heap_create(
+    heap_t* heap_ptr, heap_table_t* table,
+    void* heap_start, void* table_start,
+    size_t heap_size, size_t block_size);
+
 void* heap_malloc(heap_t* heap, size_t size);
+
 void heap_free(heap_t* heap, void* ptr);
 
 #endif //FIRST_ASM_HEAP_H
