@@ -17,8 +17,8 @@
 
 #include <stdint.h>
 
-typedef uint32_t* paging_table_entry_t;
-typedef paging_table_entry_t* paging_directory_entry_t;
+typedef uint32_t paging_table_entry_t;
+typedef uint32_t paging_directory_entry_t;
 
 typedef struct paging_4gb_chunk
 {
@@ -32,9 +32,8 @@ paging_directory_entry_t* paging_4gb_chunk_get_directory(const paging_4gb_chunk*
 void paging_switch(paging_directory_entry_t* directory);
 
 extern void paging_load_directory(paging_directory_entry_t* directory);
+
 extern void paging_enable_paging();
 
-int paging_find_directory_and_table_index(paging_directory_entry_t* directory, void* address, paging_directory_entry_t** table_ptr, paging_table_entry_t** entry_ptr);
-
-int paging_setup_paging_for_address(paging_4gb_chunk* chunk, void* address);
+int paging_set_value(paging_directory_entry_t* directory, void* virtual_address, uint32_t table_entry);
 #endif //FIRST_ASM_PAGING_H
