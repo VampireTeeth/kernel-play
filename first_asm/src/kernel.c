@@ -1,20 +1,18 @@
 #include "kernel.h"
 #include "io/io.h"
+#include "memory/paging/paging.h"
 #include "idt/idt.h"
 #include "memory/heap/kheap.h"
-#include "memory/paging/paging.h"
 
 void kernel_main() {
-    const char hello[] = "Hello, my kernel!";
     terminal_init();
-    print_string(hello);
-
     idtr_init();
     kheap_init();
-    void* ptr1 = kheap_malloc(50);
-    void* ptr2 = kheap_malloc(15000);
-    kheap_free(ptr2);
-    void* ptr3 = kheap_malloc(5000);
-    kheap_free(ptr3);
-    kheap_free(ptr1);
+
+    paging_4gb_chunk* chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT);
+    paging_directory_entry_t* directory = paging_4gb_chunk_get_directory(chunk);
+    void* addr = kheap_zalloc(5000);
+    paging_setup_paging_for_address(chunk, addr);
+    paging_switch(directory);
+    paging_enable_paging();
 }
