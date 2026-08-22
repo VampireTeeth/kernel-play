@@ -65,6 +65,8 @@ load32:
     mov ecx, 100
     mov edi, 0x00100000
     call ata_lba_read
+
+    ;call read_from_disk
     jmp SEG_CODE:0x00100000
 
 ata_lba_read:

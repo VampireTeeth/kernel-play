@@ -3,9 +3,12 @@
 #include "memory/paging/paging.h"
 #include "idt/idt.h"
 #include "memory/heap/kheap.h"
+#include "disk/disk.h"
 
 void kernel_main() {
     terminal_init();
+    print_string("Welcome!\n");
+    disk_search_and_init();
     idtr_init();
     kheap_init();
     uint8_t flags = PAGING_IS_WRITABLE | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT;
@@ -22,4 +25,5 @@ void kernel_main() {
 
     print_string(ptr2);
     print_string(ptr1);
+
 }
