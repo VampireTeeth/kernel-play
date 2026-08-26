@@ -4,6 +4,7 @@
 #include "idt/idt.h"
 #include "memory/heap/kheap.h"
 #include "disk/disk.h"
+#include "fs/pparser.h"
 
 void kernel_main() {
     terminal_init();
@@ -26,4 +27,21 @@ void kernel_main() {
     print_string(ptr2);
     print_string(ptr1);
 
+
+    const char* path_str = "0:/test/ok/me.txt";
+    const char* path_str1 = "1:/another/dir/you.txt";
+    path_root_t* path_root = kheap_zalloc(sizeof(path_root_t));
+    int r = pparser_parse_path_root(path_str, path_root);
+    if (r < 0)
+    {
+        print_string("Failed to parse path root!\n");
+    }
+    pparser_free_path_root(path_root);
+    path_root_t* path_root1 = kheap_zalloc(sizeof(path_root_t));
+    r = pparser_parse_path_root(path_str1, path_root1);
+    if (r < 0)
+    {
+        print_string("Failed to parse path root!\n");
+    }
+    pparser_free_path_root(path_root1);
 }

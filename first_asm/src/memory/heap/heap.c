@@ -146,13 +146,13 @@ void heap_free(heap_t* heap, void* ptr)
 {
     int block_start = (ptr - heap->start_addr) / KERNEL_HEAP_BLOCK_SIZE;
     heap_block_table_entry_t* entry = heap->table->entries + block_start;
-    void* cur_data_block = heap->start_addr;;
-    while (heap_table_entry_has_next(entry))
+    void* cur_data_block = ptr;
+    do
     {
         memset(cur_data_block, 0, KERNEL_HEAP_BLOCK_SIZE);
         *entry = HEAP_BLOCK_TABLE_ENTRY_FREE;
         entry++;
         cur_data_block += KERNEL_HEAP_BLOCK_SIZE;
-    }
+    } while (heap_table_entry_has_next(entry));
     ptr = NULL;
 }
