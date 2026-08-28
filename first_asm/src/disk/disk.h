@@ -18,6 +18,6 @@ typedef struct disk
 
 void disk_search_and_init();
 struct disk* disk_get(int index);
-int disk_read_block(disk_t* idisk, unsigned int lba, int total, void* buf);
+int disk_read_sector(disk_t* idisk, unsigned int lba, int total, void* buf);
 
 #endif //FIRST_ASM_DISK_H

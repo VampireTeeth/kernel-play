@@ -70,13 +70,13 @@ run_bochs: $(OS_BIN)
 qemu_debug: $(OS_BIN)
 	gdb \
 		--eval-command="set confirm off" \
-		--eval-command="set architechture i386" \
-		--eval-command="target remote | qemu-system-i386 -drive format=raw,file=$(OS_BIN) -display gtk -S -gdb stdio -no-reboot -d int,cpu_reset -D $(TARGET)/qemu.log" \
+		--eval-command="set architecture i386" \
+		--eval-command="target remote | qemu-system-i386 -drive file=$(OS_BIN),index=0,media=disk -display gtk -S -gdb stdio -no-reboot -d int,cpu_reset -D $(TARGET)/qemu.log" \
 		--eval-command="add-symbol-file $(KERNEL_FULL_OBJ) 0x00100000" \
 		--eval-command="break kernel_main"
 
 qemu_run: $(OS_BIN)
-	qemu-system-x86_64 -drive format=raw,file=$(OS_BIN) -display gtk
+	qemu-system-x86_64 -drive file=$(OS_BIN),index=0,media=disk -display gtk
 
 clean:
 	rm -f $(OBJS) $(BOOT_BIN) $(KERNEL_BIN) $(OS_BIN) $(OS_IMG) $(KERNEL_FULL_OBJ)
