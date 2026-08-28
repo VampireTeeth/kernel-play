@@ -1,8 +1,6 @@
 /* linker.ld */
-/**
 OUTPUT_FORMAT(elf32-i386)
 OUTPUT_ARCH(i386)
-**/
 
 ENTRY(kernel_entry)
 OUTPUT_FORMAT(binary)

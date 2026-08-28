@@ -38,7 +38,7 @@ int disk_streamer_read_bytes(disk_streamer_t* streamer, int total, void* out)
     int max_readable = DISK_SECTOR_SIZE - offset;
     char buf[max_readable];
     res = disk_read_sector(streamer->disk, sector, 1, buf);
-    if (!res)
+    if (res < 0)
     {
         return res;
     }

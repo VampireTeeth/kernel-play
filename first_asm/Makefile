@@ -16,6 +16,7 @@ KERNEL_OBJ = $(TARGET)/kernel.asm.o
 KERNEL_C_OBJ = $(TARGET)/kernel.o $(TARGET)/idt.o
 KERNEL_FULL_OBJ = $(TARGET)/kernelfull.o
 
+KERNEL_ELF = $(TARGET)/kernel.elf
 KERNEL_BIN = $(TARGET)/kernel.bin
 
 # Find all source files
@@ -46,9 +47,12 @@ $(TARGET)/%.o: src/%.c | $(TARGET)
 	mkdir -p $(dir $@)
 	i686-elf-gcc $(INCLUDES) $(FLAGS) -std=gnu99 -c $< -o $@
 
-$(KERNEL_BIN): $(OBJS)
+$(KERNEL_ELF): $(OBJS)
 	i686-elf-ld -g -relocatable $(OBJS) -o $(KERNEL_FULL_OBJ)
-	i686-elf-gcc $(FLAGS) -T $(LINKER_LD) -o $(KERNEL_BIN) $(KERNEL_FULL_OBJ)
+	i686-elf-gcc $(FLAGS) -T $(LINKER_LD) -o $@ $(KERNEL_FULL_OBJ)
+
+$(KERNEL_BIN): $(KERNEL_ELF)
+	i686-elf-objcopy -O binary $< $@
 
 $(OS_BIN): $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=$(BOOT_BIN) of=$(OS_BIN) status=none
@@ -67,16 +71,16 @@ run_bochs: $(OS_BIN)
 		"display_library: sdl2" \
 		"megs: 128"
 
-qemu_debug: $(OS_BIN)
+qemu_debug: $(KERNEL_ELF) $(OS_BIN)
 	gdb \
 		--eval-command="set confirm off" \
 		--eval-command="set architecture i386" \
+		--eval-command="file $(KERNEL_ELF)" \
 		--eval-command="target remote | qemu-system-i386 -drive file=$(OS_BIN),index=0,media=disk -display gtk -S -gdb stdio -no-reboot -d int,cpu_reset -D $(TARGET)/qemu.log" \
-		--eval-command="add-symbol-file $(KERNEL_FULL_OBJ) 0x00100000" \
 		--eval-command="break kernel_main"
 
 qemu_run: $(OS_BIN)
-	qemu-system-x86_64 -drive file=$(OS_BIN),index=0,media=disk -display gtk
+	qemu-system-i386 -drive file=$(OS_BIN),index=0,media=disk -display gtk
 
 clean:
-	rm -f $(OBJS) $(BOOT_BIN) $(KERNEL_BIN) $(OS_BIN) $(OS_IMG) $(KERNEL_FULL_OBJ)
+	rm -f $(OBJS) $(BOOT_BIN) $(KERNEL_ELF) $(KERNEL_BIN) $(OS_BIN) $(OS_IMG) $(KERNEL_FULL_OBJ)
