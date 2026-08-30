@@ -4,6 +4,7 @@
 #include "disk.h"
 
 #include "config.h"
+#include "fs/file.h"
 #include "io/io.h"
 
 #include "memory/memory.h"
@@ -43,6 +44,7 @@ void disk_search_and_init()
     memset(&root_disk, 0, sizeof(disk_t));
     root_disk.type = DISK_TYPE_REAL;
     root_disk.sector_size = DISK_SECTOR_SIZE;
+    root_disk.filesystem = fs_resolve(&root_disk);
 }
 
 disk_t* disk_get(int index)

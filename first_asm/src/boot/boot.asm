@@ -8,7 +8,29 @@ SEG_DATA equ gdt_data - gdt_start
 jump_short:
     jmp short main ;; 2-byte jmp short instruction
     nop ;; NOP 1-byte nop directive
-    times 33 db 0 ;; data bytes padding with 0x00 33-byte
+
+    ; FAT16 Header
+    OEMIdentifier           db 'VAMPOS  ' ; 8 bytes
+    BytesPerSector          dw 0x200 ;512 bytes per sector
+    SectorsPerCluster       db 0x80 ;128 sectors per cluster
+    ReservedSectors         dw 200
+    FATCopies               db 0x02
+    RootDirEntries          dw 0x40 ;64 entries in the root directory
+    NumSectors              dw 0x00
+    MediaType               db 0xF8
+    SectorsPerFat           dw 0x100
+    SectorsPerTrack         dw 0x20
+    NumberOfHeads           dw 0x40
+    HiddenSectors           dd 0x00
+    SectorsBig              dd 0x773594
+
+    ; Extended BPB (Dos 4.0)
+    DriveNumber             db 0x80
+    WinNTBit                db 0x00
+    Signature               db 0x29
+    VolumeID                dd 0xD105
+    VolumeIDString          db 'VAMPOS BOOT' ; 11-bytes
+    SystemIDString          db 'FAT16   '
 
 main:
     jmp 0x00:real_main ; moves the cs register to point to real_main

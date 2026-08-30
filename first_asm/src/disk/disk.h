@@ -4,6 +4,7 @@
 
 #ifndef FIRST_ASM_DISK_H
 #define FIRST_ASM_DISK_H
+#include "fs/file.h"
 
 typedef unsigned int DISK_TYPE;
 
@@ -14,6 +15,7 @@ typedef struct disk
 {
     DISK_TYPE type;
     int sector_size;
+    filesystem_t* filesystem;
 } disk_t;
 
 void disk_search_and_init();
