@@ -22,7 +22,7 @@ KERNEL_BIN = $(TARGET)/kernel.bin
 # Find all source files
 EXCLUDED_ASM_SRCS := src/add.asm src/hello.asm src/scratch.asm
 ASM_SRCS := $(wildcard src/kernel.asm src/idt/*.asm src/io/*.asm src/memory/paging/*.asm)  # The kernel.asm needs to be the first, so the kernel.asm.o will be first in OBJS
-C_SRCS := $(wildcard src/*.c src/idt/*.c src/memory/*.c src/io/*.c src/memory/heap/*.c src/memory/paging/*.c src/disk/*.c src/string/*.c src/fs/*.c)
+C_SRCS := $(wildcard src/*.c src/idt/*.c src/memory/*.c src/io/*.c src/memory/heap/*.c src/memory/paging/*.c src/disk/*.c src/string/*.c src/fs/*.c src/fs/fat/*.c)
 # Transform source paths to object paths (e.g., src/main.c -> target/src/main.o)
 OBJS := $(patsubst src/%.asm,$(TARGET)/%.asm.o,$(ASM_SRCS)) $(patsubst src/%.c,$(TARGET)/%.o,$(C_SRCS)) # The kernel.asm.o needs to be the first obj entry
 OS_BIN = $(TARGET)/os.bin
@@ -58,12 +58,14 @@ $(OS_BIN): $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=$(BOOT_BIN) of=$(OS_BIN) status=none
 	dd if=$(KERNEL_BIN) >> $(OS_BIN)
 	dd if=/dev/zero bs=1048576 count=16 >> $(OS_BIN)
-	sudo mount -t vfat $@ /mnt/d
-	sudo cp ./hello.txt /mnt/d
-	sudo umount /mnt/d
 
 all: $(OS_BIN)
 	echo "Build Kernel"
+
+cp_file_to_fat16: $(OS_BIN)
+	sudo mount -t vfat $(OS_BIN) /mnt/d
+	sudo cp ./hello.txt /mnt/d
+	sudo umount /mnt/d
 
 run_bochs: $(OS_BIN)
 	dd if=/dev/zero of=$(OS_IMG) bs=512 count=2880 status=none

@@ -18,7 +18,7 @@
 #define KERNEL_HEAP_TABLE_ADDRESS 0x00007E00 // this address is in the real mode, but we dont need bootload at this point
 
 #define MAX_FILESYSTEMS 12
-#define MAX_FILEDESCRIPTORS 256
+#define MAX_FILEDESCRIPTORS 512
 
 #define OK 0
 #define EIO 1

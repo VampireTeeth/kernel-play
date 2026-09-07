@@ -9,6 +9,8 @@
 
 size_t strlen(const char* s);
 
+char* strcpy(char* dst, char* src);
+
 int char_to_numeric(char c);
 
 bool is_digit(char c);

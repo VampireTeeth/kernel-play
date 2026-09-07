@@ -16,6 +16,20 @@ size_t strlen(const char* s)
     return c;
 }
 
+char* strcpy(char* dst, char* src)
+{
+    char* s = src;
+    char* r = dst;
+    while (*s!= '\0')
+    {
+        *r = *s;
+        s++;
+        r++;
+    }
+    *r = '\0';
+    return r;
+}
+
 int char_to_numeric(char c)
 {
     return (int)c - 48;

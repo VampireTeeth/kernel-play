@@ -3,7 +3,7 @@
 //
 
 #include "file.h"
-
+#include "fs/fat/fat16.h"
 #include "config.h"
 #include "memory/memory.h"
 #include "memory/heap/kheap.h"
@@ -35,7 +35,7 @@ void fs_insert_filesystem(filesystem_t* filesystem)
 
 static void fs_static_load()
 {
-    // fs_insert_filesystem(fat16_init());
+    fs_insert_filesystem(fat16_init());
 }
 
 static void fs_load()
@@ -50,7 +50,7 @@ void fs_init()
     fs_load();
 }
 
-static int fs_new_descriptor(file_descriptor_t** fd_out)
+static int file_new_descriptor(file_descriptor_t** fd_out)
 {
     int res = -ENOMEM;
     for (int i = 0; i < MAX_FILEDESCRIPTORS; i++)
@@ -69,7 +69,7 @@ static int fs_new_descriptor(file_descriptor_t** fd_out)
     return res;
 }
 
-static file_descriptor_t* fs_get_file_descriptor(int fd)
+static file_descriptor_t* file_get_descriptor(int fd)
 {
     if (fd < 0 || fd >= MAX_FILEDESCRIPTORS)
     {
