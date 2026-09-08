@@ -175,9 +175,8 @@ static int sector_pos_to_bytes_offset(disk_t* disk, int sector_pos)
 
 static int fat16_get_total_items_for_directory(disk_t* disk, fat_private_t* fat_private, int dir_sector_pos)
 {
-    struct fat_directory_item empty_item;
     struct fat_directory_item item;
-    memset(&empty_item, 0, sizeof(empty_item));
+    memset(&item, 0, sizeof(item));
     int res = 0;
     int count = 0;
     int dir_bytes_offset = sector_pos_to_bytes_offset(disk, dir_sector_pos);
@@ -288,6 +287,7 @@ int fat16_resolve(struct disk* disk)
     }
     disk->fs_private = fat_private;
     disk->filesystem = &fat16_fs;
+
     out:
     if (disk_stream)
     {
