@@ -42,6 +42,7 @@ static int read_from_disk(int lba, int total, void* buf)
 void disk_search_and_init()
 {
     memset(&root_disk, 0, sizeof(disk_t));
+    root_disk.id = 0;
     root_disk.type = DISK_TYPE_REAL;
     root_disk.sector_size = DISK_SECTOR_SIZE;
     root_disk.filesystem = fs_resolve(&root_disk);

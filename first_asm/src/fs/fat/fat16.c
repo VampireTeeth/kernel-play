@@ -5,8 +5,11 @@
 #include "config.h"
 #include "fs/file.h"
 #include "string/string.h"
-#include <stdint.h>
 #include "disk/streamer.h"
+#include <stdint.h>
+
+#include "memory/memory.h"
+#include "memory/heap/kheap.h"
 
 #define KERNEL_FAT16_SIGNATURE 0x29
 #define KERNEL_FAT16_FAT_ENTRY_SIZE 0x02
@@ -52,18 +55,18 @@ struct fat_header
     uint16_t sectors_per_fat;
     uint16_t sectors_per_track;
     uint16_t number_of_heads;
-    uint32_t hidden_setors;
+    uint32_t hidden_sectors;
     uint32_t sectors_big;
 } __attribute__((packed));
 
-struct fat_h
+typedef struct fat_h
 {
     struct fat_header primary_header;
     union fat_h_e
     {
         struct fat_header_extended extended_header;
     } shared;
-};
+} fat_h_t;
 
 struct fat_directory_item
 {
@@ -82,15 +85,15 @@ struct fat_directory_item
     uint32_t filesize;
 } __attribute__((packed));
 
-struct fat_directory
+typedef struct fat_directory
 {
     struct fat_directory_item* item;
     int total;
     int sector_pos;
     int ending_sector_pos;
-};
+} fat_directory_t;
 
-struct fat_item
+typedef struct fat_item
 {
     union
     {
@@ -99,18 +102,18 @@ struct fat_item
     };
 
     FAT_ITEM_TYPE type;
-};
+} fat_item_t;
 
-struct fat_item_descriptor
+typedef struct fat_item_descriptor
 {
     struct fat_item* item;
     uint32_t pos;
-};
+} fat_item_descriptor_t;
 
-struct fat_private
+typedef struct fat_private
 {
-    struct fat_h header;
-    struct fat_directory root_directory;
+    fat_h_t header;
+    fat_directory_t root_directory;
 
     // Used to stream data clusters
     disk_streamer_t* cluster_read_stream;
@@ -119,17 +122,11 @@ struct fat_private
 
     // Used in situations where we stream the directory
     disk_streamer_t* directory_stream;
-};
+} fat_private_t;
 
-void* fat16_open(struct disk* disk, path_part_t* path, FILE_MODE mode)
-{
-    return 0;
-}
+void* fat16_open(struct disk* disk, path_part_t* path, FILE_MODE mode);
 
-int fat16_resolve(struct disk* disk)
-{
-    return -EIO;
-}
+int fat16_resolve(struct disk* disk);
 
 filesystem_t fat16_fs =
 {
@@ -141,4 +138,165 @@ filesystem_t* fat16_init()
 {
     strcpy(fat16_fs.name,  "FAT16");
     return &fat16_fs;
+}
+
+void* fat16_open(struct disk* disk, path_part_t* path, FILE_MODE mode)
+{
+    // TODO
+    return NULL;
+}
+
+static int fat16_init_private(fat_private_t* fat_private, struct disk* disk)
+{
+    memset(fat_private, 0, sizeof(fat_private_t));
+    int disk_id = disk->id;
+    fat_private->cluster_read_stream = disk_streamer_new(disk_id);
+    if (!fat_private->cluster_read_stream)
+    {
+        return -EIO;
+    }
+    fat_private->fat_read_stream = disk_streamer_new(disk_id);
+    if (!fat_private->fat_read_stream)
+    {
+        return -EIO;
+    }
+    fat_private->directory_stream = disk_streamer_new(disk_id);
+    if (!fat_private->directory_stream)
+    {
+        return -EIO;
+    }
+    return 0;
+}
+
+static int sector_pos_to_bytes_offset(disk_t* disk, int sector_pos)
+{
+    return disk->sector_size * sector_pos;
+}
+
+static int fat16_get_total_items_for_directory(disk_t* disk, fat_private_t* fat_private, int dir_sector_pos)
+{
+    struct fat_directory_item empty_item;
+    struct fat_directory_item item;
+    memset(&empty_item, 0, sizeof(empty_item));
+    int res = 0;
+    int count = 0;
+    int dir_bytes_offset = sector_pos_to_bytes_offset(disk, dir_sector_pos);
+    disk_streamer_t* ds = fat_private->directory_stream;
+    if (disk_streamer_seek_pos(ds, dir_bytes_offset) != OK)
+    {
+        res = -EIO;
+        goto out;
+    }
+    while(1)
+    {
+        if (disk_streamer_read_bytes(ds, sizeof(item), &item) != OK)
+        {
+            res = -EIO;
+            goto out;
+        }
+        if (item.filename[0] == 0x00)
+        {
+            // we are done
+            break;
+        }
+        if (item.filename[0] == 0xE5)
+        {
+            // item is unused
+            continue;
+        }
+        count++;
+    }
+    res = count;
+    out:
+    return res;
+}
+
+static int fat16_get_root_directory(disk_t* disk, fat_private_t* fat_private, fat_directory_t* fat_directory)
+{
+    struct fat_header* primary_header = &fat_private->header.primary_header;
+    int root_dir_sector_pos = (primary_header->fat_copies * primary_header->sectors_per_fat) + primary_header->reserved_sectors;
+    int root_dir_entries = primary_header->root_dir_entries;
+    int root_dir_size = root_dir_entries * sizeof(struct fat_directory_item);
+    int total_sectors = root_dir_size / disk->sector_size;
+    if (root_dir_size % disk->sector_size)
+    {
+        total_sectors += 1;
+    }
+    int total_items = fat16_get_total_items_for_directory(disk, fat_private, root_dir_sector_pos);
+    if (total_items < 0)
+    {
+        return -EIO;
+    }
+    struct fat_directory_item* root_dir_items = kheap_zalloc(root_dir_size);
+    if (!root_dir_items)
+    {
+        return -ENOMEM;
+    }
+    disk_streamer_t* ds = fat_private->directory_stream;
+    int res = disk_streamer_seek_pos(ds, sector_pos_to_bytes_offset(disk, root_dir_sector_pos));
+    if (res != OK)
+    {
+        return -EIO;
+    }
+    res = disk_streamer_read_bytes(ds, root_dir_size, root_dir_items);
+    if (res != OK)
+    {
+        return -EIO;
+    }
+    fat_directory->item = root_dir_items;
+    fat_directory->sector_pos = root_dir_sector_pos;
+    fat_directory->total = total_items;
+    fat_directory->ending_sector_pos = root_dir_sector_pos + (root_dir_size / disk->sector_size);
+    return 0;
+}
+
+int fat16_resolve(struct disk* disk)
+{
+    int res = 0;
+    fat_private_t* fat_private = kheap_zalloc(sizeof(fat_private_t));
+    if (!fat_private)
+    {
+        res = -ENOMEM;
+        goto out;
+    }
+    res = fat16_init_private(fat_private, disk);
+    if (res != OK)
+    {
+        goto out;
+    }
+    disk_streamer_t* disk_stream = disk_streamer_new(disk->id);
+    if (!disk_stream)
+    {
+        res = -EIO;
+        goto out;
+    }
+    res = disk_streamer_read_bytes(disk_stream, sizeof(fat_private->header), &fat_private->header);
+    if (res != OK)
+    {
+        res = -EIO;
+        goto out;
+    }
+    if (fat_private->header.shared.extended_header.signature != KERNEL_FAT16_SIGNATURE)
+    {
+        res = -EFSNOTUS;
+        goto out;
+    }
+    res = fat16_get_root_directory(disk, fat_private, &fat_private->root_directory);
+    if (res != OK) {
+        res = -EIO;
+        goto out;
+    }
+    disk->fs_private = fat_private;
+    disk->filesystem = &fat16_fs;
+    out:
+    if (disk_stream)
+    {
+        disk_streamer_close(disk_stream);
+    }
+    if (res < 0)
+    {
+        kheap_free(fat_private);
+        disk->fs_private = NULL;
+    }
+    return res;
 }
