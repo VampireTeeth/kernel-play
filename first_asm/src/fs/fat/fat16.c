@@ -245,7 +245,7 @@ static int fat16_get_root_directory(disk_t* disk, fat_private_t* fat_private, fa
     fat_directory->item = root_dir_items;
     fat_directory->sector_pos = root_dir_sector_pos;
     fat_directory->total = total_items;
-    fat_directory->ending_sector_pos = root_dir_sector_pos + (root_dir_size / disk->sector_size);
+    fat_directory->ending_sector_pos = root_dir_sector_pos + total_sectors; // This is the end of the last sector
     return 0;
 }
 

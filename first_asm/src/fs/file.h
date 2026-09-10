@@ -45,7 +45,8 @@ typedef struct file_descriptor
 } file_descriptor_t;
 
 void fs_init();
-int fopen(const char* filename, const char* mode);
 void fs_insert_filesystem(filesystem_t* filesystem);
+
+int fopen(const char* filename, const char* mode);
 filesystem_t* fs_resolve(struct disk* disk);
 #endif //FIRST_ASM_FILE_H

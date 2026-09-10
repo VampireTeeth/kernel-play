@@ -5,8 +5,10 @@
 #include "file.h"
 #include "fs/fat/fat16.h"
 #include "config.h"
+#include "disk/disk.h"
 #include "memory/memory.h"
 #include "memory/heap/kheap.h"
+#include "string/string.h"
 
 filesystem_t* filesystems[MAX_FILESYSTEMS];
 file_descriptor_t* filedescriptors[MAX_FILEDESCRIPTORS];
@@ -93,8 +95,82 @@ filesystem_t* fs_resolve(struct disk* disk)
     }
     return fs;
 }
-
-int fopen(const char* filename, const char* mode)
+static FILE_MODE get_file_mode(const char* s)
 {
-    return -EIO;
+    FILE_MODE mode = FILE_MODE_INVALID;
+    if (strncmp(s, "r", 1) == 0)
+    {
+        mode = FILE_MODE_READ;
+    }
+    else if (strncmp(s, "w", 1) == 0)
+    {
+        mode = FILE_MODE_WRITE;
+    }
+    else if (strncmp(s, "a", 1) == 0)
+    {
+        mode = FILE_MODE_APPEND;
+    }
+    return mode;
+}
+
+int fopen(const char* filename, const char* mode_str)
+{
+    int res = 0;
+    path_root_t* path_root = kheap_zalloc(sizeof(path_root_t));
+    res = pparser_parse_path_root(filename, path_root);
+    if (res < 0)
+    {
+        goto out;
+    }
+    if (!path_root->parts)
+    {
+        res = -EINVARG;
+        goto out;
+    }
+    disk_t* disk = disk_get(path_root->drive_no);
+    if (!disk)
+    {
+        res = -EIO;
+        goto out;
+    }
+    if (!disk->filesystem)
+    {
+        res = -EIO;
+        goto out;
+    }
+    FILE_MODE mode = get_file_mode(mode_str);
+    if (FILE_MODE_INVALID == mode)
+    {
+        res = -EINVARG;
+        goto out;
+    }
+
+    void* fd_private = disk->filesystem->open(disk, path_root->parts, mode);
+    if (!fd_private)
+    {
+        res = -EIO;
+        goto out;
+    }
+    if (((int)fd_private) < 0)
+    {
+        res = (int)fd_private;
+        goto out;
+    }
+    file_descriptor_t* desc = 0;
+    res = file_new_descriptor(&desc);
+    if (res < 0)
+    {
+        goto out;
+    }
+    desc->fs = disk->filesystem;
+    desc->private = fd_private;
+    desc->disk = disk;
+    res = desc->index;
+out:
+    // fopen should not return negative value
+    if (res < 0)
+    {
+        res = 0;
+    }
+    return res;
 }

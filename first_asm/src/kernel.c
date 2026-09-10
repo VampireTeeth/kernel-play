@@ -7,6 +7,12 @@
 #include "disk/streamer.h"
 #include "fs/pparser.h"
 
+void demo_fopen()
+{
+    const char* file = "0:/hello.txt";
+    fopen(file, "r");
+}
+
 void demo_pparser()
 {
     const char* path_str = "0:/test/ok/me.txt";
@@ -43,6 +49,7 @@ void kernel_main() {
     kheap_init();
     fs_init();
     disk_search_and_init();
+    demo_fopen();
     uint8_t flags = PAGING_IS_WRITABLE | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT;
     paging_4gb_chunk* chunk = paging_new_4gb(flags);
     paging_directory_entry_t* directory = paging_4gb_chunk_get_directory(chunk);

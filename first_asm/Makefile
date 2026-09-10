@@ -62,7 +62,7 @@ $(OS_BIN): $(BOOT_BIN) $(KERNEL_BIN)
 all: $(OS_BIN)
 	echo "Build Kernel"
 
-cp_file_to_fat16: $(OS_BIN)
+cp_file: $(OS_BIN)
 	sudo mount -t vfat $(OS_BIN) /mnt/d
 	sudo cp ./hello.txt /mnt/d
 	sudo umount /mnt/d
