@@ -57,7 +57,7 @@ $(KERNEL_BIN): $(KERNEL_ELF)
 $(OS_BIN): $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=$(BOOT_BIN) of=$(OS_BIN) status=none
 	dd if=$(KERNEL_BIN) >> $(OS_BIN)
-	dd if=/dev/zero bs=1048576 count=16 >> $(OS_BIN)
+	dd if=/dev/zero bs=1M count=16 >> $(OS_BIN)
 
 all: $(OS_BIN)
 	echo "Build Kernel"

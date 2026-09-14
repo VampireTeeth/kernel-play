@@ -21,6 +21,8 @@ typedef struct disk
     void* fs_private;
 } disk_t;
 
+int read_from_disk(int lba, int total, void* buf);
+
 void disk_search_and_init();
 struct disk* disk_get(int index);
 int disk_read_sector(disk_t* idisk, unsigned int lba, int total, void* buf);

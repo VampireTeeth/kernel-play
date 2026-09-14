@@ -25,5 +25,6 @@
 #define EINVARG 2
 #define ENOMEM 3
 #define EFSNOTUS 4
+#define ERDONLY 5
 
 #endif

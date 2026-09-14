@@ -60,7 +60,7 @@ gdt_null:
     dd 0x00 ;; 4-bytes 0s
 
 gdt_code: ;; CS should point to here
-    dw 0xff ;; limit 0-15 bits
+    dw 0xffff ;; limit 0-15 bits
     dw 0x00 ;; base 16-31 bits
     db 0x00 ;; base 32-39 bits
     db 10011010b ;; Access byte
@@ -68,7 +68,7 @@ gdt_code: ;; CS should point to here
     db 0x00 ;; Base
 
 gdt_data: ;; DS, ES, FS, GS should point to here
-    dw 0xff ;; limit 0-15 bits
+    dw 0xffff ;; limit 0-15 bits
     dw 0x00 ;; base 16-31 bits
     db 0x00 ;; base 32-39 bits
     db 10010010b ;; Access byte

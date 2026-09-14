@@ -11,7 +11,7 @@
 
 disk_t root_disk;
 
-static int read_from_disk(int lba, int total, void* buf)
+int read_from_disk(int lba, int total, void* buf)
 {
     outb(0x1F6, (lba >> 24) | 0xE0);
     outb(0x1F2, total);
