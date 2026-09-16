@@ -7,6 +7,35 @@
 #include "disk/streamer.h"
 #include "fs/pparser.h"
 
+static void demo_pparser();
+static void demo_disk_streamer();
+static void demo_fopen();
+static void demo_fread();
+
+void kernel_main() {
+    int res = 0;
+    terminal_init();
+    print_string("Welcome!\n");
+    idtr_init();
+    res = kheap_init();
+    if (res < 0)
+    {
+        print_string("Failed to create kernel heap\n");
+    }
+    fs_init();
+    disk_search_and_init();
+    uint8_t flags = PAGING_IS_WRITABLE | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT;
+    paging_4gb_chunk* chunk = paging_new_4gb(flags);
+    paging_directory_entry_t* directory = paging_4gb_chunk_get_directory(chunk);
+    paging_switch(directory);
+    paging_enable_paging();
+
+    demo_pparser();
+    demo_disk_streamer();
+    demo_fopen();
+    demo_fread();
+}
+
 void demo_fopen()
 {
     const char* file = "0:/aaa/bbb/hello.txt";
@@ -17,6 +46,16 @@ void demo_fopen()
         print_string(file);
         print_string("\n");
     }
+}
+
+void demo_fread()
+{
+    const char* file = "0:/aaa/bbb/hello.txt";
+    int fd = fopen(file, "r");
+    size_t len = 100;
+    char out[len];
+    fread(out, len, 1, fd);
+    print_string(out);
 }
 
 void demo_pparser()
@@ -48,22 +87,3 @@ void demo_disk_streamer()
     disk_streamer_close(streamer);
 }
 
-void kernel_main() {
-    int res = 0;
-    terminal_init();
-    print_string("Welcome!\n");
-    idtr_init();
-    res = kheap_init();
-    if (res < 0)
-    {
-        print_string("Failed to create kernel heap\n");
-    }
-    fs_init();
-    disk_search_and_init();
-    demo_fopen();
-    uint8_t flags = PAGING_IS_WRITABLE | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT;
-    paging_4gb_chunk* chunk = paging_new_4gb(flags);
-    paging_directory_entry_t* directory = paging_4gb_chunk_get_directory(chunk);
-    paging_switch(directory);
-    paging_enable_paging();
-}
