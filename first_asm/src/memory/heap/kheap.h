@@ -6,7 +6,7 @@
 #define FIRST_ASM_KHEAP_H
 #include <stddef.h>
 
-void kheap_init();
+int kheap_init();
 void* kheap_malloc(size_t size);
 void* kheap_zalloc(size_t size);
 void kheap_free(void* ptr);

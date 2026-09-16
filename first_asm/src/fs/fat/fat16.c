@@ -164,7 +164,7 @@ static void fat16_get_full_relative_filename(const struct fat_directory_item* it
     if (item->ext[0] != 0x00 && item->ext[0] != 0x20)
     {
         *out_tmp = '.';
-        *out_tmp += 1;
+        out_tmp += 1;
         fat16_to_proper_string(&out_tmp, (const char*)item->ext);
     }
 }
@@ -181,7 +181,7 @@ static struct fat_directory_item* fat16_clone_directory_item(struct fat_director
     return item_copy;
 }
 
-int fat16_cluster_to_sector(fat_private_t* fat_private, int cluster)
+static int fat16_cluster_to_sector(fat_private_t* fat_private, int cluster)
 {
     int sectors_per_cluster = fat_private->header.primary_header.sectors_per_cluster;
     return fat_private->root_directory.ending_sector_pos + ((cluster - 2) * sectors_per_cluster);
@@ -356,8 +356,9 @@ struct fat_directory* fat16_load_fat_directory(disk_t* disk, struct fat_director
     int cluster_sector = fat16_cluster_to_sector(fat_private, cluster);
     int total_items = fat16_get_total_items_for_directory(disk, fat_private, cluster_sector);
     directory->total = total_items;
-    int directory_size = directory->total * sizeof(struct fat_directory_item*);
+    int directory_size = directory->total * sizeof(struct fat_directory_item);
     directory->item = kheap_zalloc(directory_size);
+
     if (!directory->item)
     {
         res = -ENOMEM;
@@ -368,6 +369,15 @@ struct fat_directory* fat16_load_fat_directory(disk_t* disk, struct fat_director
     {
         goto out;
     }
+    int starting_sector = fat16_cluster_to_sector(fat_private, cluster);
+    int total_sectors = directory_size / disk->sector_size;
+    if (directory_size % disk->sector_size)
+    {
+        total_sectors++;
+    }
+    int ending_sector_pos = starting_sector + total_sectors;
+    directory->sector_pos = starting_sector;
+    directory->ending_sector_pos = ending_sector_pos;
     out:
     if (res != OK)
     {
@@ -384,7 +394,8 @@ static fat_item_t* fat16_new_fat_item_for_directory_item(disk_t* disk, struct fa
     fat_item_t* item = kheap_zalloc(sizeof(fat_item_t));
     if (!item)
     {
-        return 0;
+        item = 0;
+        goto out;
     }
     if (directory_item->attribute & FAT_FILE_SUBDIRECTORY)
     {
@@ -392,13 +403,13 @@ static fat_item_t* fat16_new_fat_item_for_directory_item(disk_t* disk, struct fa
         item->type = FAT_ITEM_TYPE_DIRECTORY;
         goto out;
     }
-    item->type = FAT_ITEM_TYPE_FILE;
     item->item = fat16_clone_directory_item(directory_item);
+    item->type = FAT_ITEM_TYPE_FILE;
     out:
     return item;
 }
 
-// find the fat_item_t* that matches the given file name
+// find the fat_item_t* that matches the given name in the given directory
 static fat_item_t* fat16_get_item_in_directory(disk_t* disk, const fat_directory_t* directory, const char* path)
 {
     fat_item_t* fat_item = 0;
@@ -416,12 +427,57 @@ static fat_item_t* fat16_get_item_in_directory(disk_t* disk, const fat_directory
     return fat_item;
 }
 
+// recursion version of fat16_get_directory_entry
+static fat_item_t* fat16_get_directory_entry_recur(disk_t* disk, const fat_directory_t* directory, path_part_t* path)
+{
+    int res = OK;
+    fat_item_t* item = fat16_get_item_in_directory(disk, directory, path->name);
+    if (!item)
+    {
+        res = -EIO;
+        goto out;
+    }
+    path_part_t* next_path = path->next;
+
+    if (!next_path)
+    {
+        // Found the leaf file/directory
+        if (item->type != FAT_ITEM_TYPE_FILE)
+        {
+            res = -EINVARG;
+        }
+        goto out;
+    }
+    if (item->type != FAT_ITEM_TYPE_DIRECTORY)
+    {
+        res = -EIO;
+        goto out;
+    }
+
+    fat_item_t* nxt_item = fat16_get_directory_entry_recur(disk, item->directory, next_path);
+    if (!nxt_item)
+    {
+        res = -EIO;
+        goto out;
+    }
+    fat16_fat_item_free(item);
+    item = nxt_item;
+
+    out:
+    if (res != OK)
+    {
+        fat16_fat_item_free(item);
+        item = 0;
+    }
+    return item;
+}
+
 
 static fat_item_t* fat16_get_directory_entry(disk_t* disk, path_part_t* path)
 {
     fat_private_t* fat_private = disk->fs_private;
     fat_item_t* current_item = 0;
-    fat_item_t* root_item = fat16_get_item_in_directory(disk, &fat_private->root_directory, path->path);
+    fat_item_t* root_item = fat16_get_item_in_directory(disk, &fat_private->root_directory, path->name);
     if (!root_item)
     {
         goto out;
@@ -436,7 +492,7 @@ static fat_item_t* fat16_get_directory_entry(disk_t* disk, path_part_t* path)
             current_item = 0;
             break;
         }
-        fat_item_t* tmp_item = fat16_get_item_in_directory(disk, current_item->directory, next_part->path);
+        fat_item_t* tmp_item = fat16_get_item_in_directory(disk, current_item->directory, next_part->name);
         fat16_fat_item_free(current_item);
         current_item = tmp_item;
         next_part = next_part->next;
@@ -458,6 +514,11 @@ void* fat16_open(struct disk* disk, path_part_t* path, FILE_MODE mode)
         return (void*)(-ENOMEM);
     }
     fat_item_t* entry = fat16_get_directory_entry(disk, path);
+
+    // This is another version of fat16_get_directory_entry using recursion
+    // fat_private_t* fat_private = disk->fs_private;
+    // fat_item_t* entry = fat16_get_directory_entry_recur(disk, &fat_private->root_directory, path);
+
     if (!entry)
     {
         return (void*)(-EIO);

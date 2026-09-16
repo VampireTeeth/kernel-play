@@ -52,7 +52,22 @@ int strncmp(const char* lhs, const char* rhs, int len)
 
 char tolower(char c)
 {
-    return c + 32;
+    if (c >= 'A' && c <= 'Z')
+    {
+        // only convert the uppercase chars
+        return c + 32;
+    }
+    return c;
+}
+
+char toupper(char c)
+{
+    if (c >= 'a' && c <= 'c')
+    {
+        // only convert the lowercase chars
+        return c - 32;
+    }
+    return c;
 }
 
 int istrncmp(const char* lhs, const char* rhs, int len)

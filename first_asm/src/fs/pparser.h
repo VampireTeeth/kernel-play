@@ -8,7 +8,7 @@
 
 typedef struct path_part
 {
-    const char *path;
+    const char *name;
     struct path_part *next;
 } path_part_t;
 

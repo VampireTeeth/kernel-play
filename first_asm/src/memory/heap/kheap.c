@@ -12,7 +12,7 @@ static heap_t heap;
 static heap_table_t heap_table;
 //for a 100MB heap: 1024 * 1024 * 100 / 4096 = 25600
 //this is the number entries of heap_table
-void kheap_init()
+int kheap_init()
 {
     int heap_table_size = KERNEL_HEAP_SIZE_IN_BYTES / KERNEL_HEAP_BLOCK_SIZE;
     heap_table.size = heap_table_size;
@@ -23,10 +23,7 @@ void kheap_init()
         (void*) KERNEL_HEAP_TABLE_ADDRESS,
         KERNEL_HEAP_SIZE_IN_BYTES,
         KERNEL_HEAP_BLOCK_SIZE);
-    if (res < 0)
-    {
-        print_string("Failed to create kernel heap\n");
-    }
+    return res;
 }
 
 void* kheap_malloc(size_t size)

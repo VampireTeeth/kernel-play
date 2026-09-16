@@ -6,6 +6,7 @@
 #include "config.h"
 #include "memory/memory.h"
 #include "io/io.h"
+#include "terminal/terminal.h"
 
 static idt_desc idt_descriptors[OS_TOTAL_INTERRUPTS];
 static idtr_desc idtr_descriptor;

@@ -1,5 +1,5 @@
 #include "kernel.h"
-#include "io/io.h"
+#include "terminal/terminal.h"
 #include "memory/paging/paging.h"
 #include "idt/idt.h"
 #include "memory/heap/kheap.h"
@@ -9,8 +9,14 @@
 
 void demo_fopen()
 {
-    const char* file = "0:/hello.txt";
-    fopen(file, "r");
+    const char* file = "0:/aaa/bbb/hello.txt";
+    int fd = fopen(file, "r");
+    if (fd)
+    {
+        print_string("found file:");
+        print_string(file);
+        print_string("\n");
+    }
 }
 
 void demo_pparser()
@@ -43,10 +49,15 @@ void demo_disk_streamer()
 }
 
 void kernel_main() {
+    int res = 0;
     terminal_init();
     print_string("Welcome!\n");
     idtr_init();
-    kheap_init();
+    res = kheap_init();
+    if (res < 0)
+    {
+        print_string("Failed to create kernel heap\n");
+    }
     fs_init();
     disk_search_and_init();
     demo_fopen();

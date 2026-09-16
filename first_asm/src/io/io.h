@@ -5,11 +5,6 @@
 #ifndef FIRST_ASM_IO_H
 #define FIRST_ASM_IO_H
 
-// termimal print functions
-void print_string(const char* str);
-
-void terminal_init();
-
 
 // IN and  out functions
 unsigned char insb(unsigned short port);

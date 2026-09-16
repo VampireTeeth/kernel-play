@@ -43,7 +43,7 @@ static int pparser_parse_path_parts(const char** path_str, path_part_t* path_par
     char* name = kheap_zalloc((name_len+1)*sizeof(char));
     memcpy(name, p - name_len, name_len);
     name[name_len] = '\0';
-    path_part->path = name;
+    path_part->name = name;
     if (*p == '\0')
     {
         path_part->next = NULL;
@@ -82,7 +82,7 @@ int pparser_parse_path_root(const char* const path_str, path_root_t* path_root)
 
 static void pparser_free_path_part(path_part_t* path_part)
 {
-    kheap_free((void*)path_part->path);
+    kheap_free((void*)path_part->name);
     if (path_part->next != NULL)
     {
         pparser_free_path_part(path_part->next);

@@ -21,5 +21,7 @@ int char_to_numeric(char c);
 
 char tolower(char c);
 
+char toupper(char c);
+
 bool is_digit(char c);
 #endif //FIRST_ASM_STRING_H

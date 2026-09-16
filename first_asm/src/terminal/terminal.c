@@ -41,4 +41,3 @@ void terminal_init() {
         }
     }
 }
-
