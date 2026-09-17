@@ -5,7 +5,7 @@
 #ifndef FIRST_ASM_TERMINAL_H
 #define FIRST_ASM_TERMINAL_H
 
-// termimal print functions
+// terminal print functions
 void print_string(const char* str);
 
 void terminal_init();

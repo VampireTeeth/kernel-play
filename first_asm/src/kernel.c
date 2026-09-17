@@ -46,16 +46,29 @@ void demo_fopen()
         print_string(file);
         print_string("\n");
     }
+
+    file = "0:/aaa/bbb/bighello.txt";
+    fd = fopen(file, "r");
+    if (fd)
+    {
+        print_string("found file:");
+        print_string(file);
+        print_string("\n");
+    }
 }
 
 void demo_fread()
 {
-    const char* file = "0:/aaa/bbb/hello.txt";
+    const char* file = "0:/aaa/bbb/bighello.txt";
     int fd = fopen(file, "r");
-    size_t len = 100;
-    char out[len];
-    fread(out, len, 1, fd);
-    print_string(out);
+    size_t len = 1024; // 10M size
+    char out[len+1];
+    for (int i = 0; i < 1024 * 10; i++)
+    {
+        fread(out, 1024, 1, fd);
+        out[len] = '\0';
+        print_string(out);
+    }
 }
 
 void demo_pparser()
