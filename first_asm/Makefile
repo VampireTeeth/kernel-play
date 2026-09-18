@@ -64,8 +64,9 @@ all: $(OS_BIN)
 
 cp_file: $(OS_BIN) | $(TARGET)
 	rm -f $(TARGET)/bighello.txt
-	dd if=/dev/zero of=$(TARGET)/bighello.txt bs=1 count=0 seek=10M
-	dd if=./hello.txt of=$(TARGET)/bighello.txt bs=10M count=1 conv=notrunc
+
+	awk '{ line=$$0; for(n=1;;n++) printf "%s %d\n", line, n }' ./hello.txt | head -c 10485760 > $(TARGET)/bighello.txt
+
 	sudo mount -t vfat $(OS_BIN) /mnt/d
 	sudo mkdir -p /mnt/d/aaa/bbb
 	sudo cp $(TARGET)/bighello.txt /mnt/d/aaa/bbb/

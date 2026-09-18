@@ -24,4 +24,6 @@ char tolower(char c);
 char toupper(char c);
 
 bool is_digit(char c);
+
+void itoa(int i, char* s);
 #endif //FIRST_ASM_STRING_H

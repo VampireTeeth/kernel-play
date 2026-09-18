@@ -13,6 +13,9 @@ disk_t root_disk;
 
 int read_from_disk(int lba, int total, void* buf)
 {
+    // Wait for drive to be ready
+    while (insb(0x1F7) & 0x80) {} // BSY bit
+
     outb(0x1F6, (lba >> 24) | 0xE0);
     outb(0x1F2, total);
     outb(0x1F3, (unsigned char) lba & 0xFF);

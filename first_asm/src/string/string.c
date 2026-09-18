@@ -94,3 +94,32 @@ bool is_digit(char c)
 {
     return (c >= '0' && c <= '9');
 }
+
+static void reverse(char* const begin, char* const end)
+{
+    char *b = begin, *e = end;
+    char tmp = 0;
+    while (b < e)
+    {
+        tmp = *b;
+        *b = *e;
+        *e = tmp;
+        b++;
+        e--;
+    }
+}
+
+void itoa(int i, char* s)
+{
+    char* const begin = s;
+    int k = 0;
+    while (i > 0)
+    {
+        k = i % 10;
+        *s = k + 48;
+        i = i / 10;
+        s++;
+    }
+    reverse(begin, s-1);
+    *s = '\0';
+}

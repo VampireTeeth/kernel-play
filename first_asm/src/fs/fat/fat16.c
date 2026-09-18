@@ -225,7 +225,7 @@ static int fat16_get_fat_entry(disk_t* disk, int cluster)
         goto out;
     }
     uint32_t fat_table_position = fat16_get_first_fat_sector(fat_private) * disk->sector_size;
-    res = disk_streamer_seek_pos(stream, fat_table_position * (cluster * KERNEL_FAT16_FAT_ENTRY_SIZE));
+    res = disk_streamer_seek_pos(stream, fat_table_position + (cluster * KERNEL_FAT16_FAT_ENTRY_SIZE));
     if (res < 0)
     {
         goto out;
@@ -276,7 +276,7 @@ static int fat16_get_cluster_for_offset(disk_t* disk, int starting_cluster, int 
     for (int i = 0; i < clusters_ahead; i++)
     {
         int entry = fat16_get_fat_entry(disk, cluster_to_use);
-        if (is_readable_cluster(entry))
+        if (!is_readable_cluster(entry))
         {
             res = -EIO;
             goto out;
@@ -334,53 +334,11 @@ static int fat16_read_internal_from_stream_v2(disk_t* disk, disk_streamer_t* str
     return res;
 }
 
-static int fat16_read_internal_from_stream(disk_t* disk, disk_streamer_t* stream, int starting_cluster, int offset, int total, void* out)
-{
-    int res = 0;
-    fat_private_t* fat_private = disk->fs_private;
-    int size_of_cluster_bytes = fat16_get_cluster_size_in_bytes(disk, fat_private);
-    int cluster_to_use = fat16_get_cluster_for_offset(disk, starting_cluster, offset);
-    if (!cluster_to_use)
-    {
-        res = cluster_to_use;
-        goto out;
-    }
-    int offset_from_cluster = offset % size_of_cluster_bytes;
-    int starting_sector = fat16_cluster_to_sector(fat_private, cluster_to_use);
-    int starting_pos = (starting_sector * disk->sector_size) + offset_from_cluster;
-    int total_to_read = total > size_of_cluster_bytes ? size_of_cluster_bytes : total;
-    res = disk_streamer_seek_pos(stream, starting_pos);
-    if (res != OK)
-    {
-        goto out;
-    }
-    res = disk_streamer_read_bytes(stream, total_to_read, out);
-    if (res != OK)
-    {
-        goto out;
-    }
-    total -= total_to_read;
-    if (total > 0)
-    {
-        res = fat16_read_internal_from_stream(disk, stream, starting_cluster, offset+total_to_read, total, out + total_to_read);
-    }
-    out:
-    return res;
-}
-
 static int fat16_read_internal_v2(disk_t* disk, int starting_cluster, int offset, int total, void* out)
 {
     fat_private_t* fat_private = disk->fs_private;
     disk_streamer_t* stream = fat_private->cluster_read_stream;
     int res = fat16_read_internal_from_stream_v2(disk, stream, starting_cluster, offset, total, out);
-    return res;
-}
-
-static int fat16_read_internal(disk_t* disk, int starting_cluster, int offset, int total, void* out)
-{
-    fat_private_t* fat_private = disk->fs_private;
-    disk_streamer_t* stream = fat_private->cluster_read_stream;
-    int res = fat16_read_internal_from_stream(disk, stream, starting_cluster, offset, total, out);
     return res;
 }
 

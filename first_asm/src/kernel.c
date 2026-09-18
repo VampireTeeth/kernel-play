@@ -6,6 +6,7 @@
 #include "disk/disk.h"
 #include "disk/streamer.h"
 #include "fs/pparser.h"
+#include "string/string.h"
 
 static void demo_pparser();
 static void demo_disk_streamer();
@@ -36,6 +37,21 @@ void kernel_main() {
     demo_fread();
 }
 
+void count_and_print(const char * const S)
+{
+    const char* p = S;
+    int c = 0;
+    while (*p)
+    {
+        p++;
+        c++;
+    }
+    char s[100];
+    itoa(c, s);
+    print_string("Total bytes read from file: ");
+    print_string(s);
+}
+
 void demo_fopen()
 {
     const char* file = "0:/aaa/bbb/hello.txt";
@@ -61,13 +77,22 @@ void demo_fread()
 {
     const char* file = "0:/aaa/bbb/bighello.txt";
     int fd = fopen(file, "r");
-    size_t len = 1024; // 10M size
-    char out[len+1];
-    for (int i = 0; i < 1024 * 10; i++)
+    size_t len = 1024 * 1024 * 2;
+    char* out = kheap_zalloc((len+1) * sizeof(char));
+    int res = 0;
+    res = fread(out, 1024, 1024, fd);
+    if (res < 0)
     {
-        fread(out, 1024, 1, fd);
-        out[len] = '\0';
-        print_string(out);
+        print_string("Failed to read file!\n");
+        goto out;
+    }
+    out[len] = '\0';
+    count_and_print(out);
+
+    out:
+    if (out)
+    {
+        kheap_free(out);
     }
 }
 
