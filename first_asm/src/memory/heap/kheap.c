@@ -6,7 +6,6 @@
 #include "config.h"
 #include "memory/memory.h"
 #include "heap.h"
-#include "io/io.h"
 
 static heap_t heap;
 static heap_table_t heap_table;

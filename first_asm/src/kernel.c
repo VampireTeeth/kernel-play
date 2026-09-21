@@ -12,6 +12,7 @@ static void demo_pparser();
 static void demo_disk_streamer();
 static void demo_fopen();
 static void demo_fread();
+static void demo_fseek();
 
 void kernel_main() {
     int res = 0;
@@ -35,9 +36,10 @@ void kernel_main() {
     demo_disk_streamer();
     demo_fopen();
     demo_fread();
+    demo_fseek();
 }
 
-void count_and_print(const char * const S)
+static void count_and_print(const char * const S)
 {
     const char* p = S;
     int c = 0;
@@ -50,9 +52,10 @@ void count_and_print(const char * const S)
     itoa(c, s);
     print_string("Total bytes read from file: ");
     print_string(s);
+    print_string("\n");
 }
 
-void demo_fopen()
+static void demo_fopen()
 {
     const char* file = "0:/aaa/bbb/hello.txt";
     int fd = fopen(file, "r");
@@ -73,7 +76,7 @@ void demo_fopen()
     }
 }
 
-void demo_fread()
+static void demo_fread()
 {
     const char* file = "0:/aaa/bbb/bighello.txt";
     int fd = fopen(file, "r");
@@ -89,6 +92,30 @@ void demo_fread()
     out[len] = '\0';
     count_and_print(out);
 
+    out:
+    if (out)
+    {
+        kheap_free(out);
+    }
+}
+
+static void demo_fseek()
+{
+    const char* file = "0:/aaa/bbb/bighello.txt";
+    int fd = fopen(file, "r");
+    size_t len = 100;
+    char* out = kheap_zalloc((len+1) * sizeof(char));
+    int res = 0;
+    res = fseek(fd, 10, SEEK_SET);
+    res = fread(out, 100, 1, fd);
+    if (res < 0)
+    {
+        print_string("Failed to read file!\n");
+        goto out;
+    }
+    out[len] = '\0';
+    count_and_print(out);
+    print_string(out);
     out:
     if (out)
     {

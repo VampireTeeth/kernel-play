@@ -174,7 +174,23 @@ out:
     }
     return res;
 }
-
+int fseek(int fd, int offset, FILE_SEEK_MODE whence)
+{
+    int res = 0;
+    file_descriptor_t* desc = file_get_descriptor(fd);
+    if (!desc)
+    {
+        res = -EIO;
+        goto out;
+    }
+    res = desc->fs->seek(desc->private, offset, whence);
+    if (res != OK)
+    {
+        res = -EIO;
+    }
+    out:
+    return res;
+}
 int fread(void* out, uint32_t size, uint32_t nmemb, int fd)
 {
     int res = 0;

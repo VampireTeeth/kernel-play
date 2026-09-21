@@ -27,4 +27,7 @@
 #define EFSNOTUS 4
 #define ERDONLY 5
 
+#define EUNIMP 99
+
+
 #endif
