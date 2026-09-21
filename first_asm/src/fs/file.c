@@ -71,6 +71,13 @@ static int file_new_descriptor(file_descriptor_t** fd_out)
     return res;
 }
 
+static void file_descriptor_free(file_descriptor_t* desc)
+{
+    const int i = desc->index - 1;
+    filedescriptors[i] = 0x00;
+    kheap_free(desc);
+}
+
 static file_descriptor_t* file_get_descriptor(int fd)
 {
     if (fd < 0 || fd >= MAX_FILEDESCRIPTORS)
@@ -202,10 +209,44 @@ int fread(void* out, uint32_t size, uint32_t nmemb, int fd)
     file_descriptor_t* desc = file_get_descriptor(fd);
     if (!desc)
     {
-        res = -EINVARG;
+        res = -EIO;
         goto out;
     }
     res = desc->fs->read(desc->disk, desc->private, size, nmemb, (char*)out);
+    out:
+    return res;
+}
+
+int fstat(int fd, file_stat_t* stat)
+{
+    int res = 0;
+    file_descriptor_t* desc = file_get_descriptor(fd);
+    if (!desc)
+    {
+        res = -EIO;
+        goto out;
+    }
+    res = desc->fs->stat(desc->disk, desc->private, stat);
+    out:
+    return res;
+}
+
+int fclose(int fd)
+{
+    int res = 0;
+    file_descriptor_t* desc = file_get_descriptor(fd);
+    if (!desc)
+    {
+        res = -EIO;
+        goto out;
+    }
+    res = desc->fs->close(desc->private);
+    if (res != OK)
+    {
+        res = -EIO;
+        goto out;
+    }
+    file_descriptor_free(desc);
     out:
     return res;
 }

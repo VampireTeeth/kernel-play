@@ -64,6 +64,7 @@ static void demo_fopen()
         print_string("found file:");
         print_string(file);
         print_string("\n");
+        fclose(fd);
     }
 
     file = "0:/aaa/bbb/bighello.txt";
@@ -73,6 +74,7 @@ static void demo_fopen()
         print_string("found file:");
         print_string(file);
         print_string("\n");
+        fclose(fd);
     }
 }
 
@@ -97,6 +99,10 @@ static void demo_fread()
     {
         kheap_free(out);
     }
+    if (fd)
+    {
+        fclose(fd);
+    }
 }
 
 static void demo_fseek()
@@ -120,6 +126,10 @@ static void demo_fseek()
     if (out)
     {
         kheap_free(out);
+    }
+    if (fd)
+    {
+        fclose(fd);
     }
 }
 
