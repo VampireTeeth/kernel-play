@@ -1,4 +1,6 @@
 #include "kernel.h"
+
+#include "config.h"
 #include "terminal/terminal.h"
 #include "memory/paging/paging.h"
 #include "idt/idt.h"
@@ -6,19 +8,45 @@
 #include "disk/disk.h"
 #include "disk/streamer.h"
 #include "fs/pparser.h"
+#include "gdt/gdt.h"
+#include "memory/memory.h"
 #include "string/string.h"
 
+gdt_t gdt_table[KERNEL_TOTAL_GDT_SEGMENTS];
+gdt_structured_t gdt_structured_table[KERNEL_TOTAL_GDT_SEGMENTS] = {
+    {.base = 0x00, .limit = 0x00, .access_type = 0x00}, // null segment
+    {.base = 0x00, .limit = 0xFFFFFFFF, .access_type = 0x9a}, // kernel code segment
+    {.base = 0x00, .limit = 0xFFFFFFFF, .access_type = 0x92}, // kernel data segment
+};
 static void demo_pparser();
 static void demo_disk_streamer();
 static void demo_fopen();
 static void demo_fread();
 static void demo_fseek();
 
+static void panic(const char* msg)
+{
+    print_string("\n");
+    print_string("panic: ");
+    print_string(msg);
+    print_string("\n");
+    while (1) {}
+}
+
+void gdt_table_init()
+{
+    memset(gdt_table, 0, sizeof(gdt_table));
+    int total_entries = KERNEL_TOTAL_GDT_SEGMENTS;
+    gdt_structured_to_gdt(gdt_table, gdt_structured_table, total_entries);
+    gdt_load(gdt_table, total_entries * sizeof(gdt_t) - 1);
+}
+
 void kernel_main() {
     int res = 0;
     terminal_init();
     print_string("Welcome!\n");
     idtr_init();
+    gdt_table_init();
     res = kheap_init();
     if (res < 0)
     {
@@ -37,6 +65,7 @@ void kernel_main() {
     demo_fopen();
     demo_fread();
     demo_fseek();
+    panic("Testing panic");
 }
 
 static void count_and_print(const char * const S)
