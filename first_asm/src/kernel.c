@@ -11,12 +11,17 @@
 #include "gdt/gdt.h"
 #include "memory/memory.h"
 #include "string/string.h"
+#include "task/tss.h"
 
+tss_t tss;
 gdt_t gdt_table[KERNEL_TOTAL_GDT_SEGMENTS];
 gdt_structured_t gdt_structured_table[KERNEL_TOTAL_GDT_SEGMENTS] = {
     {.base = 0x00, .limit = 0x00, .access_type = 0x00}, // null segment
-    {.base = 0x00, .limit = 0xFFFFFFFF, .access_type = 0x9a}, // kernel code segment
+    {.base = 0x00, .limit = 0xFFFFFFFF, .access_type = 0x9A}, // kernel code segment
     {.base = 0x00, .limit = 0xFFFFFFFF, .access_type = 0x92}, // kernel data segment
+    {.base = 0x00, .limit = 0xFFFFFFFF, .access_type = 0xF8}, // user code segment
+    {.base = 0x00, .limit = 0xFFFFFFFF, .access_type = 0xF2}, // user data segment
+    {.base = (uint32_t)&tss, .limit = sizeof(tss), .access_type = 0xE9}, // TSS segment
 };
 static void demo_pparser();
 static void demo_disk_streamer();
@@ -31,6 +36,14 @@ static void panic(const char* msg)
     print_string(msg);
     print_string("\n");
     while (1) {}
+}
+
+void tss_init()
+{
+    memset(&tss, 0x00, sizeof(tss_t));
+    tss.esp0 = 0x600000; // Kernel stack pointer
+    tss.ss0 = KERNEL_DATA_SELECTOR;
+    tss_load(5 * sizeof(gdt_t)); // tss is the 6th entry, this is the offset from gdt_table
 }
 
 void gdt_table_init()
@@ -54,6 +67,8 @@ void kernel_main() {
     }
     fs_init();
     disk_search_and_init();
+    tss_init();
+
     uint8_t flags = PAGING_IS_WRITABLE | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT;
     paging_4gb_chunk* chunk = paging_new_4gb(flags);
     paging_directory_entry_t* directory = paging_4gb_chunk_get_directory(chunk);

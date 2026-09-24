@@ -4,9 +4,6 @@ KERNEL_SRC_FILE = src/kernel.asm
 KERNEL_C_SRC_FILES = src/kernel.c src/idt/idt.c
 LINKER_LD = ./linker.ld
 
-# Derive Basename (e.g., "hello" from "src/hello.asm")
-# $(notdir ...) removes the directory path -> "hello.asm"
-# $(basename ...) removes the extension -> "hello"
 BOOT_BASE := $(basename $(notdir $(BOOT_SRC_FILE)))
 
 # Construct Output Paths Automatically
@@ -21,7 +18,7 @@ KERNEL_BIN = $(TARGET)/kernel.bin
 
 # Find all source files
 EXCLUDED_ASM_SRCS := src/add.asm src/hello.asm src/scratch.asm
-ASM_SRCS := $(wildcard src/kernel.asm src/idt/*.asm src/io/*.asm src/memory/paging/*.asm src/gdt/*.asm)  # The kernel.asm needs to be the first, so the kernel.asm.o will be first in OBJS
+ASM_SRCS := $(wildcard src/kernel.asm src/idt/*.asm src/io/*.asm src/memory/paging/*.asm src/gdt/*.asm src/task/*.asm)  # The kernel.asm needs to be the first, so the kernel.asm.o will be first in OBJS
 C_SRCS := $(wildcard src/*.c src/terminal/*.c src/idt/*.c src/memory/*.c src/io/*.c src/memory/heap/*.c src/memory/paging/*.c src/disk/*.c src/string/*.c src/fs/*.c src/fs/fat/*.c src/gdt/*.c)
 # Transform source paths to object paths (e.g., src/main.c -> target/src/main.o)
 OBJS := $(patsubst src/%.asm,$(TARGET)/%.asm.o,$(ASM_SRCS)) $(patsubst src/%.c,$(TARGET)/%.o,$(C_SRCS)) # The kernel.asm.o needs to be the first obj entry

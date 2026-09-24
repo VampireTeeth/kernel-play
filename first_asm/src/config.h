@@ -30,6 +30,6 @@
 #define EUNIMP 99
 
 
-#define KERNEL_TOTAL_GDT_SEGMENTS 3
+#define KERNEL_TOTAL_GDT_SEGMENTS 6
 
 #endif
